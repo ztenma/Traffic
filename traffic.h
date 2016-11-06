@@ -25,7 +25,7 @@ enum ObjectId
     PEDESTRIAN, PEDESTRIAN_GARBAGE
 };
 
-char * ID_DISPLAY_MAP = \
+char * ID_DISPLAY_MAP[] = \
 {
     " ", " ",
     "┃", "━",
@@ -42,12 +42,13 @@ char * ID_DISPLAY_MAP = \
 }
 //🐧pinguin 🚦vertical_traffic_light
 
-int getObjectId (char * ID_DISPLAY_MAP, char * displayChar) {
+int getObjectId (char * displayChar) {
     int i, index = -1;
     
-    for (i = 0; i < OBJECT_ID_COUNT, i++)
-        if (diaplayChar == ID_DISPLAY_MAP[i]) // TODO: unicode comparison!
+    for (i = 0; i < OBJECT_ID_COUNT; i++)
+        if (strcmp(displayChar,ID_DISPLAY_MAP[i]) == 0 ) {
             index = i;
-    
+            //printf("index = %d", i);
+        }
     return index;
 }
