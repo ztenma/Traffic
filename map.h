@@ -2,7 +2,7 @@
 typedef struct {
     int width;
     int height;
-    ID **grid;
+    ObjectId **grid;
 } Map;
 typedef Map * PMap;
 
