@@ -3,29 +3,25 @@
 # include <string.h>
 # include "map.h"
 
-Map* initMap (int width, int height)
+PMap initMap (int width, int height)
 {
     int x, y;
-    Map *map = malloc(sizeof(Map));
+    PMap map = malloc(sizeof(Map));
     map->width = width;
     map->height = height;
-    map->grid = malloc(sizeof(char**) * height);
+    map->grid = malloc(sizeof(enum ObjectId *) * height);
     for (x = 0; x < height; x++)
     {
-        map->grid[x] = malloc(sizeof(char*) * width);
-        for (y = 0; y < width; y++)
-            map->grid[x][y] = calloc(5, sizeof(char));
+        map->grid[x] = calloc(width, sizeof(enum ObjectId));
     }
     return map;
 }
 
-void destroyMap (Map *map)
+void destroyMap (PMap map)
 {
     int x, y;
     for (x = 0; x < map->height; x++)
     {
-        for (y = 0; y < map->width; y++)
-            free(map->grid[x][y]);
         free(map->grid[x]);
     }
     free(map->grid);
@@ -40,7 +36,7 @@ int numberOfBytesInChar (unsigned char val) {
     else return 4;
 }
 
-Map* loadMap (char *filename) {
+PMap loadMap (char *filename) {
     int width, height;
     int charCount = 0, i, x, y, byteLen;
     char c;
@@ -51,7 +47,7 @@ Map* loadMap (char *filename) {
     fgetc(file); // Discard the newline
     printf("width %d height %d\n", width, height);
 
-    Map* map = initMap(width, height);
+    PMap map = initMap(width, height);
 
     while ((c = fgetc(file)) != EOF)
     {
@@ -59,15 +55,17 @@ Map* loadMap (char *filename) {
         y = charCount % width;
         //printf("char at (%d,%d): '%c' (0x%X) ", x, y, c, c);
         if (c == '\n' || c == '\r') { putchar('\n'); continue; }
+        //retrieve the unicode character
         byteLen = numberOfBytesInChar((unsigned char)c);
-        //map->grid[x][y] = malloc(sizeof(char)*(byteLen+1));
-        map->grid[x][y][0] = c;
+        char* s = malloc(sizeof(char)*(byteLen+1));
+        s[0] = c;
         for (i = 1; i < byteLen; i++) {
-            map->grid[x][y][i] = fgetc(file);
+            s[i] = fgetc(file);
             //printf("%c (0x%X) ", map->grid[x][y][i], map->grid[x][y][i]);
         }
-        map->grid[x][y][byteLen] = '\0';
-        printf("%s", map->grid[x][y]);
+        s[byteLen]= '\0';
+        printf("%s", s);
+        map->grid[x][y] = getObjectId (s);
         charCount++;
     }
     fclose(file);
@@ -75,31 +73,20 @@ Map* loadMap (char *filename) {
     return map;
 }
 
-void displayMap (Map *map)
+void displayMap (PMap map)
 {
     int x, y;
-    printf("Map first char '%s'\n", map->grid[4][0]);
+    printf("Map first char '%d'\n", map->grid[4][0]);
     for (x = 0; x < map->height; x++)
     {
         for (y = 0; y < map->width ; y++)
         {
-            char *s = map->grid[x][y];
-            printf("%s", s);
+            enum ObjectId id = map->grid[x][y];
+            printf("%s", ID_DISPLAY_MAP[id]);
+            //printf("%02d ", id);
             //printf("'%s' (0x%X 0x%X 0x%X 0x%X 0x%X)\n", s, s[0], s[1], s[2], s[3], s[4]);
         }
         putchar('\n');
         //fflush(stdout);
-    }
-}
-
-void loadDisplayMap (char * filename)
-{
-    FILE * file = fopen(filename, "r");
-    if (file == NULL) { perror("Cannot load map"); return; }
-
-    char c;
-    while ((c = fgetc(file)) != EOF)
-    {
-        putchar(c);
     }
 }

@@ -2,15 +2,15 @@
 typedef struct {
     int width;
     int height;
-    ObjectId **grid;
+    enum ObjectId **grid;
 } Map;
 typedef Map * PMap;
 
 
-Map* initMap (int width, int height);
-void destroyMap (Map *map);
+PMap initMap (int width, int height);
+void destroyMap (PMap map);
 
-Map* loadMap (char *filename);
-void displayMap (Map *map);
-void loadDisplayMap (char * filename);
+PMap loadMap (char *filename);
+void displayMap (PMap map);
+
 
