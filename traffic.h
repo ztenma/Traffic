@@ -23,7 +23,7 @@ typedef struct Vehicle
 } __attribute__((packed)) Vehicle;
 typedef Vehicle *PVehicle;
 
-enum TrafficLightColor { GREEN, YELLOW, RED };
+enum TrafficLightColor { GREEN_LIGHT, YELLOW_LIGHT, RED_LIGHT};
 
 typedef struct TrafficLight
 {
