@@ -8,7 +8,7 @@ int getObjectId (char * displayChar) {
     int i, index = -1;
     
     for (i = 0; i < OBJECT_ID_COUNT; i++)
-        if (strcmp(displayChar, ID_DISPLAY_MAP[i]) == 0 ) {
+        if (strcmp(displayChar, ID_INPUT_MAP[i]) == 0 ) {
             index = i;
             //printf("index = %d", i);
         }
@@ -99,7 +99,7 @@ void displayMap (PMap map)
         for (y = 0; y < map->width ; y++)
         {
             enum ObjectId id = map->grid[x][y];
-            printf("%s", ID_DISPLAY_MAP_COLORS[id]);
+            printf("%s", ID_DISPLAY_MAP[id]);
             //printf("%02d ", id);
             //printf("'%s' (0x%X 0x%X 0x%X 0x%X 0x%X)\n", s, s[0], s[1], s[2], s[3], s[4]);
         }
