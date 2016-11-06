@@ -13,7 +13,7 @@
 #define RESET   "\x1b[0m"
 
 
-static char * ID_DISPLAY_MAP[] = \
+static char * ID_INPUT_MAP[] = \
 {
     " ", " ",
     "┃", "━",
@@ -22,14 +22,13 @@ static char * ID_DISPLAY_MAP[] = \
     "X", 
     "╵", "╴", 
     "─", 
-    "◉", "◉", "◉", 
-    "◯", "◯", "◯", 
+    "◉",
     "🚘" , "🛱", "🚍",
     "🚎", "🚎",
     "🚶", "🚮"
 };
 
-static char * ID_DISPLAY_MAP_COLORS[] = \
+static char * ID_DISPLAY_MAP[] = \
 {
     " ", BG_GRAY " " RESET,
     "┃", "━",
@@ -38,8 +37,7 @@ static char * ID_DISPLAY_MAP_COLORS[] = \
     "X", 
     "╵", "╴", 
     "─", 
-    GREEN "◉" RESET, YELLOW "◉" RESET, RED "◉" RESET, 
-    GREEN "◯" RESET, YELLOW "◯" RESET, RED "◯" RESET, 
+    "◉",
     BLUE "🚘" RESET, RED "🛱" RESET, MAGENTA "🚍" RESET,
     CYAN "🚎" RESET, CYAN "🚎" RESET,
     "🚶", "🚮"
@@ -57,8 +55,7 @@ enum ObjectId
     PARKING_GROUND, 
     VERT_DASHED_LINE, HORI_DASHED_LINE,
     HORI_RAIL,
-    TRAFFIC_LIGHT1_GREEN, TRAFFIC_LIGHT1_YELLOW, TRAFFIC_LIGHT1_RED, 
-    TRAFFIC_LIGHT2_GREEN, TRAFFIC_LIGHT2_YELLOW, TRAFFIC_LIGHT2_RED, 
+    TRAFFIC_LIGHT,
     BLUE_CAR, FIRE_ENGINE, BUS,
     TRAMWAY1, TRAMWAY2,
     PEDESTRIAN, PEDESTRIAN_GARBAGE
@@ -72,6 +69,8 @@ typedef struct {
 } Map;
 typedef Map * PMap;
 
+int getObjectId (char * displayChar);
+char* getDisplayChar (enum ObjectId objectId);
 
 PMap initMap (int width, int height);
 void destroyMap (PMap map);
