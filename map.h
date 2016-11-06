@@ -15,6 +15,22 @@
 
 static char * ID_DISPLAY_MAP[] = \
 {
+    " ", " ",
+    "┃", "━",
+    "┛", "┗", "┓", "┏", 
+    "┱", "┲", "┹", "┺", 
+    "X", 
+    "╵", "╴", 
+    "─", 
+    "◉", "◉", "◉", 
+    "◯", "◯", "◯", 
+    "🚘" , "🛱", "🚍",
+    "🚎", "🚎",
+    "🚶", "🚮"
+};
+
+static char * ID_DISPLAY_MAP_COLORS[] = \
+{
     " ", BG_GRAY " " RESET,
     "┃", "━",
     "┛", "┗", "┓", "┏", 
@@ -28,6 +44,7 @@ static char * ID_DISPLAY_MAP[] = \
     CYAN "🚎" RESET, CYAN "🚎" RESET,
     "🚶", "🚮"
 };
+
 //🐧pinguin 🚦vertical_traffic_light
 
 
