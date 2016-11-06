@@ -2,7 +2,7 @@
 # http://stackoverflow.com/questions/5178125/how-to-place-object-files-in-separate-subdirectory
 # http://stackoverflow.com/questions/22997731/makefile-destination-directory
 CC = gcc
-CFLAGS = -g -Wall -Wno-main
+CFLAGS = -g -Wall -Wno-main -Wno-char-subscripts
 EXE = traffic
 DST_DIR = dst
 DST_EXE = $(addprefix $(DST_DIR)/, $(EXE))

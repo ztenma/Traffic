@@ -3,13 +3,13 @@
 
 # define MAX_VEHICLE_COUNT 16
 
-typedef struct
+typedef struct Pos
 {
     char x; 
     char y;
 } Pos;
 
-typedef struct
+typedef struct Vehicle
 {
     enum ObjectId objectId : 8; // Code mapped to a text output
     Pos pos;
@@ -23,15 +23,23 @@ typedef struct
 } __attribute__((packed)) Vehicle;
 typedef Vehicle *PVehicle;
 
+enum TrafficLightColor { GREEN, YELLOW, RED };
 
-typedef struct
+typedef struct TrafficLight
+{
+    Pos pos;
+    enum TrafficLightColor activeLight; 
+} TrafficLight;
+
+typedef struct Area
 {
     Pos no; 
     Pos se; 
 } Area;
 
-typedef struct
+typedef struct TrafficController
 {
+    long time;
     PMap map;
     PVehicle * vehicles;
     unsigned char vehicleCount;

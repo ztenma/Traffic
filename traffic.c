@@ -7,7 +7,10 @@
 # include "map.h"
 # include "traffic.h"
 
+# define SLEEP_TIME 100000
 
+//Pos ORIGINS[5] = {{0, 5}, {79, 5}, {0, 15}, {79, 15}, {22, 17}}; 
+//Pos DESTINATIONS[5] = {{0, 5}, {79, 5}, {0, 15}, {79, 15}, {22, 17}}; 
 
 /*
 printf("\033[%d,%dH%s\n", x, y, s);
@@ -16,14 +19,15 @@ printf("\033[1;91;48;5;8m%s\033[0m\n", x, y, s);
 
 PVehicle initVehicle (enum ObjectId id)
 {
-    PVehicle veh = malloc(sizeof(Vehicle));
+    PVehicle veh  = malloc(sizeof(Vehicle));
     veh->objectId = id;
-    veh->dest   = rand() % 4;
-    veh->origin = rand() % 4;
-    veh->align = rand() % 2;
-    veh->speed = rand() % 2;
-    veh->active = 1;
-    veh->parked = 0;
+    veh->pos      = (Pos){0, 0};
+    veh->dest     = rand() % 4;
+    veh->origin   = rand() % 4;
+    veh->align    = rand() % 2;
+    veh->speed    = rand() % 2;
+    veh->active   = 1;
+    veh->parked   = 0;
 
     return veh;
 }
@@ -90,28 +94,59 @@ bool inArea (Pos pos, Area area)
         && pos.x <= area.se.x && pos.y <= area.se.y;
 }
 
+Pos randomSource ()
+{
+
+}
+
+void displaySmallVehicle(PVehicle veh)
+{
+    Pos pos = veh->pos;
+    if (pos.x == 0) printf("\x1b[%d;%dH \n", pos.y+1, 80);
+    else printf("\x1b[%d;%dH \n", pos.y+1, pos.x);
+    printf("\x1b[%d;%dH%s\n", pos.y+1, pos.x+1, getDisplayChar(veh->objectId));
+}
+
 /////////////////////// Logic //////////////////////////////
 
-void update_model (PMap map, PVehicle * vehicles)
+void update_model (PTrafficController tc)
 {
-    //if (PV
+    if (tc->vehicleCount == 0) {//< MAX_VEHICLE_COUNT) {
+        PVehicle newVeh = initVehicle(BLUE_CAR);
+        newVeh->pos.y = 5;
+        addVehicle(tc, newVeh);
+    }
+    PVehicle veh = tc->vehicles[0];
+    veh->pos.x = (veh->pos.x + 1) % 80;
+    //getchar(); // pause
+
 }
 
-void update_UI (PMap map, PVehicle * vehicles)
+void update_UI (PTrafficController tc)
 {
-    displayMap (map);
-
+    int vehIndex = 0;
+    //for (
+    PVehicle veh = tc->vehicles[0];
+    displaySmallVehicle(veh);
+    
+    /* Print debug info */
+    printf("\x1b[20;2H[%d] (%d,%d)\n", vehIndex, veh->pos.x, veh->pos.y);
 }
 
-void simulate (PMap map)
+void simulate (PTrafficController tc)
 {
     bool simulation_end = false;
     PVehicle vehicles[MAX_VEHICLE_COUNT];
     
+    printf("\x1b[1;1H"); fflush(stdout); // Place sursor at top left
+    printf("\x1b[2J"); // clear screen
+    displayMap (tc->map);
+
     while (!simulation_end) {
-        update_model(map, vehicles);
-        update_UI(map, vehicles);
-        usleep(100000); // 100ms
+        update_model(tc);
+        update_UI(tc);
+        
+        usleep(SLEEP_TIME);
     }
 }
 
@@ -122,13 +157,15 @@ int main (int argc, char ** argv)
     //printf("%s %lu\n", utf8str, strlen(utf8str)); */
     //printf("'\xe2\x94\x83'\n");
     //printf("size: %d, objectId: %d, dest: %d, origin: %d, parked: %d, align: %d, speed: %d, active: %d\n", sizeof(veh), veh.objectId, veh.dest, veh.origin, veh.parked, veh.align, veh.speed, veh.active);
-    Area a1 = (Area){{0, 0}, {2, 3}};
-    printf("%d %d %d %d %d\n", sizeof(a1), a1.no.x, a1.no.y, a1.se.x, a1.se.y);
+    //Area a1 = (Area){{0, 0}, {2, 3}};
+    //printf("%d %d %d %d %d\n", sizeof(a1), a1.no.x, a1.no.y, a1.se.x, a1.se.y);
     
     PMap map = loadMap ("default.map");
+    PTrafficController tc = initTrafficController(map);
 
-    //simulate(map);
+    simulate(tc);
 
+    destroyTrafficController(tc);
     destroyMap (map);
     
     return EXIT_SUCCESS;
