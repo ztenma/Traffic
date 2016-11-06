@@ -3,6 +3,22 @@
 # include <string.h>
 # include "map.h"
 
+int getObjectId (char * displayChar) {
+    int i, index = -1;
+    
+    for (i = 0; i < OBJECT_ID_COUNT; i++)
+        if (strcmp(displayChar,ID_DISPLAY_MAP[i]) == 0 ) {
+            index = i;
+            //printf("index = %d", i);
+        }
+    return index;
+}
+
+char* getDisplayChar (enum ObjectId objectId)
+{
+    return ID_DISPLAY_MAP[objectId]; 
+}
+
 PMap initMap (int width, int height)
 {
     int x, y;
@@ -66,6 +82,7 @@ PMap loadMap (char *filename) {
         s[byteLen]= '\0';
         printf("%s", s);
         map->grid[x][y] = getObjectId (s);
+        free(s);
         charCount++;
     }
     fclose(file);

@@ -4,45 +4,8 @@
 # include <unistd.h>
 # include <time.h>
 
-# include "bitops.h"
-//# include "map.h"
-//# include "traffic.h"
-
-enum ObjectId
-{
-    ROAD, PAVEMENT, 
-    VERT_BORDER, HORI_BORDER, 
-    NW_BORDER, NE_BORDER, SW_BORDER, SE_BORDER,
-    RLLDH_BORDER, LLRDH_BORDER, RLLUH_BORDER, LLRUH_BORDER, 
-    PARKING_GROUND, 
-    VERT_DASHED_LINE, HORI_DASHED_LINE,
-    HORI_RAIL,
-    TRAFFIC_LIGHT1_GREEN, TRAFFIC_LIGHT1_YELLOW, TRAFFIC_LIGHT1_RED, 
-    TRAFFIC_LIGHT2_GREEN, TRAFFIC_LIGHT2_YELLOW, TRAFFIC_LIGHT2_RED, 
-    BLUE_CAR, FIRE_ENGINE, BUS,
-    TRAMWAY_LEFT, TRAMWAY_BODY, TRAMWAY_RIGHT,
-    PEDESTRIAN, PEDESTRIAN_GARBAGE
-};
-
-typedef struct {
-    int width;
-    int height;
-    enum ObjectId **grid;
-} Map;
-typedef Map * PMap;
-
-typedef struct
-{
-    enum ObjectId objectId : 8; // Code mapped to a text output
-    // destination (2), origin (2), parked, align, speed, active
-    unsigned char dest   : 2; // N, E, S, W
-    unsigned char origin : 2; // N, E, S, W
-    unsigned char align  : 1; // 0: left, 1: right
-    unsigned char speed  : 1; // 0: slow, 1: quick
-    unsigned char active : 1; 
-    unsigned char parked : 1; 
-} __attribute__((packed)) Vehicle;
-typedef Vehicle *PVehicle;
+# include "map.h"
+# include "traffic.h"
 
 char MAX_VEHICLE_COUNT = 10;
 
@@ -55,12 +18,14 @@ PVehicle generateVehicle (enum ObjectId id)
 {
     PVehicle veh = malloc(sizeof(Vehicle));
     veh->objectId = id;
-    veh->dest   = rand % 4;
-    veh->origin = rand % 4;
-    veh->align = rand % 2;
-    veh->speed = rand % 2;
+    veh->dest   = rand() % 4;
+    veh->origin = rand() % 4;
+    veh->align = rand() % 2;
+    veh->speed = rand() % 2;
     veh->active = 1;
     veh->parked = 0;
+
+    return veh;
 }
 
 void update_model (PMap map, PVehicle * vehicles)
