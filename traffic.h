@@ -1,8 +1,6 @@
 # if !defined(TRAFFIC_H)
 # define TRAFFIC_H
 
-# define MAX_VEHICLE_COUNT 16
-
 typedef struct Pos
 {
     char x; 
@@ -28,7 +26,7 @@ enum TrafficLightColor { GREEN_LIGHT, YELLOW_LIGHT, RED_LIGHT};
 typedef struct TrafficLight
 {
     Pos pos;
-    enum TrafficLightColor activeLight; 
+    enum TrafficLightColor activeLight;
 } TrafficLight;
 
 typedef struct Area
@@ -43,6 +41,8 @@ typedef struct TrafficController
     PMap map;
     PVehicle * vehicles;
     unsigned char vehicleCount;
+    TrafficLight * trafficLights;
+    unsigned char trafficLightCount;
     Area areas[];
     
 } TrafficController;
