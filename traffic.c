@@ -7,7 +7,7 @@
 # include "map.h"
 # include "traffic.h"
 
-char MAX_VEHICLE_COUNT = 10;
+int MAX_VEHICLE_COUNT = 10;
 
 /*
 printf("\033[%d,%dH%s\n", x, y, s);
@@ -59,10 +59,10 @@ int main (int argc, char ** argv)
     //printf("'\xe2\x94\x83'\n");
     //printf("size: %d, objectId: %d, dest: %d, origin: %d, parked: %d, align: %d, speed: %d, active: %d\n", sizeof(veh), veh.objectId, veh.dest, veh.origin, veh.parked, veh.align, veh.speed, veh.active);
     
-    /*Map *map = loadMap ("default.map");
+    PMap map = loadMap ("default.map");
     displayMap (map);
     destroyMap (map);
-    */
+    
     
     
     return EXIT_SUCCESS;
