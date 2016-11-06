@@ -3,7 +3,12 @@ typedef struct
 {
     enum ObjectId objectId; // Code mapped to a text output
     // destination (2), origin (2), parked, align, speed, active
-    char info;
+    char dest   : 2; // N, E, S, W
+    char origin : 2; // N, E, S, W
+    char parked : 1; 
+    char align  : 1; // 0: left, 1: right
+    char speed  : 1; // 0: slow, 1: quick
+    char active : 1; 
 } Vehicle;
 typedef Vehicle *PVehicle;
 
