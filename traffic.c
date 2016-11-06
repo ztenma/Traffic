@@ -8,6 +8,8 @@
 # include "traffic.h"
 
 # define SLEEP_TIME 100000
+# define MAX_VEHICLE_COUNT 16
+# define TRAFFIC_LIGHTS_COUNT 5 
 
 //Pos ORIGINS[5] = {{0, 5}, {79, 5}, {0, 15}, {79, 15}, {22, 17}}; 
 //Pos DESTINATIONS[5] = {{0, 5}, {79, 5}, {0, 15}, {79, 15}, {22, 17}}; 
@@ -43,6 +45,8 @@ PTrafficController initTrafficController (PMap map)
     tc->map = map;
     tc->vehicles = calloc(MAX_VEHICLE_COUNT, sizeof(PVehicle));
     tc->vehicleCount = 0;
+    tc->trafficLights = calloc(MAX_VEHICLE_COUNT, sizeof(TrafficLight));
+    tc->trafficLightCount = 5;
 
     return tc;
 }
@@ -53,6 +57,7 @@ void destroyTrafficController (PTrafficController tc)
     for (i = 0; i < MAX_VEHICLE_COUNT; i++)
         free(tc->vehicles[i]);
     free(tc->vehicles);
+    free(tc->trafficLights);
     free(tc);
 }
 
@@ -120,6 +125,7 @@ void update_model (PTrafficController tc)
     veh->pos.x = (veh->pos.x + 1) % 80;
     //getchar(); // pause
 
+    /* Update traffic lights */
 }
 
 void update_UI (PTrafficController tc)
