@@ -1,5 +1,5 @@
-
-
+# if !defined(TRAFFIC_H)
+# define TRAFFIC_H
 
 typedef struct
 {
@@ -13,3 +13,5 @@ typedef struct
     unsigned char parked : 1; 
 } __attribute__((packed)) Vehicle;
 typedef Vehicle *PVehicle;
+
+# endif
