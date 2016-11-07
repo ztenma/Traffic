@@ -21,7 +21,7 @@ typedef struct Vehicle
 } __attribute__((packed)) Vehicle;
 typedef Vehicle *PVehicle;
 
-enum TrafficLightColor { GREEN_LIGHT, YELLOW_LIGHT, RED_LIGHT};
+enum TrafficLightColor {GREEN_LIGHT, YELLOW_LIGHT, RED_LIGHT};
 
 typedef struct TrafficLight
 {
@@ -31,19 +31,17 @@ typedef struct TrafficLight
 
 typedef struct Area
 {
-    Pos no; 
-    Pos se; 
+    Pos nw;
+    Pos se;
 } Area;
 
 typedef struct TrafficController
 {
-    long time;
+    unsigned long long time;
     PMap map;
     PVehicle * vehicles;
     unsigned char vehicleCount;
     TrafficLight * trafficLights;
-    unsigned char trafficLightCount;
-    Area areas[];
     
 } TrafficController;
 typedef TrafficController * PTrafficController;

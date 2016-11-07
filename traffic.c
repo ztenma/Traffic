@@ -11,8 +11,24 @@
 # define MAX_VEHICLE_COUNT 16
 # define TRAFFIC_LIGHTS_COUNT 5 
 
-//Pos ORIGINS[5] = {{0, 5}, {79, 5}, {0, 15}, {79, 15}, {22, 17}}; 
-//Pos DESTINATIONS[5] = {{0, 5}, {79, 5}, {0, 15}, {79, 15}, {22, 17}}; 
+Pos ORIGINS[4]      = {{0, 0}, {79, 5}, {34, 22}, {0, 17}}; /* North invalid*/
+Pos DESTINATIONS[4] = {{39, 0}, {79, 17}, {30, 22}, {0, 7}}; 
+
+Area area_N_N  = (Area){{38, 0}, {45, 4}};
+Area area_NE_W = (Area){{38, 0}, {45, 4}};
+Area area_SE_E = (Area){{38, 0}, {45, 4}};
+Area area_S_N  = (Area){{38, 0}, {45, 4}};
+Area area_S_S  = (Area){{38, 0}, {45, 4}};
+Area area_SW_E = (Area){{38, 0}, {45, 4}};
+Area area_NW_W = (Area){{38, 0}, {45, 4}};
+
+Area area_CN_W = (Area){{38, 0}, {45, 4}};
+Area area_CS_E = (Area){{38, 0}, {45, 4}};
+Area area_CE_N = (Area){{38, 0}, {45, 4}};
+Area area_CW_S = (Area){{38, 0}, {45, 4}};
+
+Area area_CN_W = (Area){{38, 0}, {45, 4}};
+Area area_CN_W = (Area){{38, 0}, {45, 4}};
 
 /*
 printf("\033[%d,%dH%s\n", x, y, s);
@@ -23,13 +39,13 @@ PVehicle initVehicle (enum ObjectId id)
 {
     PVehicle veh  = malloc(sizeof(Vehicle));
     veh->objectId = id;
-    veh->pos      = (Pos){0, 0};
     veh->dest     = rand() % 4;
-    veh->origin   = rand() % 4;
+    veh->origin   = rand() % 3 + 1;
     veh->align    = rand() % 2;
     veh->speed    = rand() % 2;
     veh->active   = 1;
     veh->parked   = 0;
+    veh->pos      = ORIGINS[veh->origin];
 
     return veh;
 }
@@ -45,8 +61,12 @@ PTrafficController initTrafficController (PMap map)
     tc->map = map;
     tc->vehicles = calloc(MAX_VEHICLE_COUNT, sizeof(PVehicle));
     tc->vehicleCount = 0;
-    tc->trafficLights = calloc(MAX_VEHICLE_COUNT, sizeof(TrafficLight));
-    tc->trafficLightCount = 5;
+    tc->trafficLights = calloc(TRAFFIC_LIGHTS_COUNT, sizeof(TrafficLight));
+    tc->trafficLights[0] = (TrafficLight){{4, 46}, GREEN_LIGHT};
+    tc->trafficLights[1] = (TrafficLight){{8, 46}, GREEN_LIGHT};
+    tc->trafficLights[2] = (TrafficLight){{14, 25}, GREEN_LIGHT};
+    tc->trafficLights[3] = (TrafficLight){{18, 25}, GREEN_LIGHT};
+    tc->trafficLights[4] = (TrafficLight){{19, 36}, RED_LIGHT};
 
     return tc;
 }
@@ -92,16 +112,10 @@ void delVehicle (PTrafficController tc, PVehicle veh)
             delVehicleAt(tc, i);
 }
 
-
 bool inArea (Pos pos, Area area)
 {
-    return pos.x >= area.no.x && pos.y >= area.no.y
+    return pos.x >= area.nw.x && pos.y >= area.nw.y
         && pos.x <= area.se.x && pos.y <= area.se.y;
-}
-
-Pos randomSource ()
-{
-
 }
 
 void displaySmallVehicle(PVehicle veh)
@@ -118,14 +132,14 @@ void update_model (PTrafficController tc)
 {
     if (tc->vehicleCount == 0) {//< MAX_VEHICLE_COUNT) {
         PVehicle newVeh = initVehicle(BLUE_CAR);
-        newVeh->pos.y = 5;
         addVehicle(tc, newVeh);
     }
     PVehicle veh = tc->vehicles[0];
     veh->pos.x = (veh->pos.x + 1) % 80;
     //getchar(); // pause
 
-    /* Update traffic lights */
+    
+    update_traffic_lights(tc);
 }
 
 void update_UI (PTrafficController tc)
@@ -135,24 +149,38 @@ void update_UI (PTrafficController tc)
     PVehicle veh = tc->vehicles[0];
     displaySmallVehicle(veh);
     
+    display_traffic_lights(tc);
     /* Print debug info */
     printf("\x1b[20;2H[%d] (%d,%d)\n", vehIndex, veh->pos.x, veh->pos.y);
 }
 
+unsigned long long time_miliseconds ()
+{
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return 1000 * tv.tv_sec + tv.tv_usec / 1000;
+}
+
 void simulate (PTrafficController tc)
 {
+    TIME_SINCE_START = 
     bool simulation_end = false;
-    PVehicle vehicles[MAX_VEHICLE_COUNT];
+    unsigned long long time, last_time = time_miliseconds(), dt;
+    
     
     printf("\x1b[1;1H"); fflush(stdout); // Place sursor at top left
     printf("\x1b[2J"); // clear screen
     displayMap (tc->map);
 
     while (!simulation_end) {
+        time = time_miliseconds();
+        dt = time - last_time;
+    
         update_model(tc);
         update_UI(tc);
         
         usleep(SLEEP_TIME);
+        last_time = time;
     }
 }
 
