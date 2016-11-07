@@ -127,6 +127,32 @@ void displaySmallVehicle(PVehicle veh)
 }
 
 /////////////////////// Logic //////////////////////////////
+void update_traffic_lights (PTrafficController tc) 
+{
+	int i, light;
+	long timeLight;
+	unsigned long long time = tc->time;
+	//tc->trafficLights[i]->activeLight = (tc->trafficLights[i]->activeLight + 1)%3;
+	
+	for (i =0; i < 5; i++) {
+		
+		light = tc->trafficLights[i].activeLight;
+		timeLight = tc->trafficLights[i].time;
+		
+		if (timeLight + 5000 <= time && light == GREEN_LIGHT) {
+			tc->trafficLights[i].activeLight = (light + 1)%3;
+			timeLight = time;
+		}
+		if (timeLight + 2000 <= time && light == YELLOW_LIGHT) {
+			tc->trafficLights[i].activeLight = (light + 1)%3;
+			timeLight = time;
+		}
+		if (timeLight + 7000 <= time && light == RED_LIGHT) {
+			tc->trafficLights[i].activeLight = (light + 1)%3;
+			timeLight = time;
+		}
+	}
+}
 
 void update_model (PTrafficController tc)
 {
@@ -140,6 +166,28 @@ void update_model (PTrafficController tc)
 
     
     update_traffic_lights(tc);
+}
+
+void display_traffic_lights (PTrafficController tc) 
+{
+	int i;
+	for (i =0; i < 5; i++) {
+		
+		int x, y, light;
+		x = tc->trafficLights[i].pos.x;
+		y = tc->trafficLights[i].pos.y;
+		light = tc->trafficLights[i].activeLight;
+		
+		if (light == GREEN_LIGHT) {
+			printf( GREEN "\x1b%d;%dH%s" RESET "\n", y, x, "◉" );
+		}
+		if (light == YELLOW_LIGHT) {
+			printf( YELLOW "\x1b%d;%dH%s" RESET "\n", y, x + 1, "◉" );
+		}
+		if (light == RED_LIGHT) {
+			printf( RED "\x1b%d;%dH%s" RESET "\n", y, x + 2, "◉" );
+		}	
+	}
 }
 
 void update_UI (PTrafficController tc)

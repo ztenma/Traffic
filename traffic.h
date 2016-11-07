@@ -26,6 +26,7 @@ enum TrafficLightColor {GREEN_LIGHT, YELLOW_LIGHT, RED_LIGHT};
 typedef struct TrafficLight
 {
     Pos pos;
+    long time;
     enum TrafficLightColor activeLight;
 } TrafficLight;
 
