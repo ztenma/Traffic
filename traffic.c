@@ -3,6 +3,7 @@
 # include <stdio.h>
 # include <unistd.h>
 # include <time.h>
+# include <sys/time.h>
 
 # include "map.h"
 # include "traffic.h"
@@ -11,33 +12,29 @@
 # define MAX_VEHICLE_COUNT 16
 # define TRAFFIC_LIGHTS_COUNT 5 
 
+char* CARDINAL_POINTS[4] = {"N", "E", "S", "W"};
+
 Pos ORIGINS[4]      = {{0, 0}, {79, 5}, {34, 22}, {0, 17}}; /* North invalid*/
 Pos DESTINATIONS[4] = {{39, 0}, {79, 17}, {30, 22}, {0, 7}}; 
 
-/*Area area_N_N  = (Area){{38, 0}, {45, 4}};
-Area area_NE_W = (Area){{38, 0}, {45, 4}};
-Area area_SE_E = (Area){{38, 0}, {45, 4}};
-Area area_S_N  = (Area){{38, 0}, {45, 4}};
-Area area_S_S  = (Area){{38, 0}, {45, 4}};
-Area area_SW_E = (Area){{38, 0}, {45, 4}};
-Area area_NW_W = (Area){{38, 0}, {45, 4}};
-
-Area area_CN_W = (Area){{38, 0}, {45, 4}};
-Area area_CS_E = (Area){{38, 0}, {45, 4}};
-Area area_CE_N = (Area){{38, 0}, {45, 4}};
-Area area_CW_S = (Area){{38, 0}, {45, 4}};*/
-
+Area area_ALL  = (Area){{0, 0}, {79, 22}};
+ 
 Area area_N_N  = (Area){{38, 0}, {45, 4}};
-Area area_EW  = (Area){{2, 0}, {45, 4}};
-Area area_WE  = (Area){{38, 0}, {45, 4}};
-Area area_S_N  = (Area){{38, 0}, {45, 4}};
-Area area_NS  = (Area){{29, 5}, {45, 4}};
-Area area_SN = (Area){{38, 0}, {45, 4}};
+Area area_EW  = (Area){{0, 5}, {79, 7}};
+Area area_WE  = (Area){{0, 15}, {79, 17}};
+Area area_S_N  = (Area){{33, 18}, {36, 22}};
+Area area_NS  = (Area){{30, 5}, {30, 22}};
+Area area_SN = (Area){{43, 5}, {43, 17}};
 
 /*
 printf("\033[%d,%dH%s\n", x, y, s);
 printf("\033[1;91;48;5;8m%s\033[0m\n", x, y, s);
 */
+
+void print_debug (Pos pos, char* message)
+{
+    printf("\x1b[%d;%dH%s", pos.y+1, pos.x+1, message); fflush(stdout);
+}
 
 PVehicle initVehicle (enum ObjectId id)
 {
@@ -103,8 +100,12 @@ void delVehicleAt (PTrafficController tc, char index)
         printf("Error: cannot delete vehicle at index %d\n", index);
         //destroyApplication();
     } else {
+        /*int i;
+        for (i = index; i < vehicleCount; i++)
+            tc->vehicles[i] = tc->vehicles[i+1];*/
+        tc->vehicles[index] = tc->vehicles[tc->vehicleCount-1];
         --tc->vehicleCount;
-        tc->vehicles[index] = NULL;
+        tc->vehicles[tc->vehicleCount] = NULL;
     }
 } 
 
@@ -125,12 +126,16 @@ bool inArea (Pos pos, Area area)
 
 /////////////////////// Logic //////////////////////////////
 
-void displaySmallVehicle(PVehicle veh)
+void displaySmallVehicle (PVehicle veh)
 {
     Pos pos = veh->pos;
-    if (pos.x == 0) printf("\x1b[%d;%dH \n", pos.y+1, 80);
-    else printf("\x1b[%d;%dH \n", pos.y+1, pos.x);
     printf("\x1b[%d;%dH%s\n", pos.y+1, pos.x+1, getDisplayChar(veh->objectId));
+}
+
+void eraseSmallVehicle (PVehicle veh)
+{
+    Pos pos = veh->pos;
+    printf("\x1b[%d;%dH \n", pos.y+1, pos.x+1);
 }
 
 void update_traffic_lights (PTrafficController tc) 
@@ -159,16 +164,68 @@ void update_traffic_lights (PTrafficController tc)
 	}
 }
 
+
+void check_and_take_action (PVehicle veh)
+{
+    bool in_N_N = inArea(veh->pos, area_N_N);
+    bool in_EW = inArea(veh->pos, area_EW);
+    bool in_WE = inArea(veh->pos, area_WE);
+    bool in_S_N = inArea(veh->pos, area_S_N);
+    bool in_NS = inArea(veh->pos, area_NS);
+    bool in_SN = inArea(veh->pos, area_SN);
+    char dest = veh->dest;
+    
+    
+    if (in_EW) {
+        if (in_NS) {
+            if (dest == 1 || dest == 2) veh->pos.y++;
+            else veh->pos.x--;
+        } else if (in_SN) {
+            if (dest == 0) veh->pos.y--;
+            else veh->pos.x--;
+        } else veh->pos.x--;
+    } else
+    if (in_WE) {
+        if (in_NS) {
+            if (dest == 2) veh->pos.y++;
+            else veh->pos.x++;
+        } else if (in_SN) {
+            if (dest == 1) veh->pos.x++;
+            else veh->pos.y--;
+        } else veh->pos.x++;
+    } else if (in_N_N) veh->pos.y--;
+    else if (in_EW) veh->pos.x--;
+    else if (in_WE) veh->pos.x++;
+    else if (in_S_N) veh->pos.y--;
+    else if (in_NS) veh->pos.y++;
+    else if (in_SN) veh->pos.y--;
+    else {
+        char debug_message[50];
+        sprintf(debug_message, "(%d,%d) no action!", veh->pos.x, veh->pos.y);
+        print_debug((Pos){1,2}, debug_message);
+    }
+}
+
 void update_model (PTrafficController tc)
 {
-    if (tc->vehicleCount == 0) {//< MAX_VEHICLE_COUNT) {
+    int i;
+    
+    print_debug((Pos){1,2}, "                ");
+    if (tc->vehicleCount < MAX_VEHICLE_COUNT) {
         PVehicle newVeh = initVehicle(BLUE_CAR);
         addVehicle(tc, newVeh);
+        print_debug((Pos){1,1}, "Vehicle created!");
     }
-    PVehicle veh = tc->vehicles[0];
-    veh->pos.x = (veh->pos.x + 1) % 80;
+    //PVehicle veh = tc->vehicles[0];
+    //veh->pos.x = (veh->pos.x + 1) % 80;
     //getchar(); // pause
-
+    for (i = 0; i < tc->vehicleCount; i++)
+    {
+        PVehicle veh = tc->vehicles[i];
+        check_and_take_action(veh);
+        if (!inArea(veh->pos, area_ALL))
+            delVehicleAt(tc, i);
+    }
     
     update_traffic_lights(tc);
 }
@@ -206,14 +263,29 @@ void display_traffic_lights (PTrafficController tc)
 
 void update_UI (PTrafficController tc)
 {
-    int vehIndex = 0;
-    //for (
-    PVehicle veh = tc->vehicles[0];
-    displaySmallVehicle(veh);
+    int vehIndex;
     
+    /*printf("\x1b[1;1H"); fflush(stdout); // Place sursor at top left
+    printf("\x1b[2J"); // clear screen
+    displayMap (tc->map);*/
+    for (vehIndex = 0; vehIndex < tc->vehicleCount; vehIndex++)
+    {
+        PVehicle veh = tc->vehicles[vehIndex];
+        displaySmallVehicle(veh);
+        
+        /* Print debug info */
+        char debug_message[50];
+        sprintf(debug_message, "[%d] (%d,%d) dest %s", vehIndex, veh->pos.x, veh->pos.y, CARDINAL_POINTS[veh->dest]);
+        print_debug((Pos){1,19 + vehIndex}, debug_message);
+    }
     display_traffic_lights(tc);
-    /* Print debug info */
-    printf("\x1b[20;2H[%d] (%d,%d)\n", vehIndex, veh->pos.x, veh->pos.y);
+}
+
+void erase_UI (PTrafficController tc)
+{
+    int vehIndex;
+    for (vehIndex = 0; vehIndex < tc->vehicleCount; vehIndex++)
+        eraseSmallVehicle(tc->vehicles[vehIndex]);
 }
 
 unsigned long long time_miliseconds ()
@@ -241,6 +313,7 @@ void simulate (PTrafficController tc)
         dt = time - last_time;
         tc->time = time;
     
+        erase_UI(tc);
         update_model(tc);
         update_UI(tc);
         
