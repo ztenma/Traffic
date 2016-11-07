@@ -7,14 +7,14 @@
 # include "map.h"
 # include "traffic.h"
 
-# define SLEEP_TIME 100000
+# define SLEEP_TIME 200000
 # define MAX_VEHICLE_COUNT 16
 # define TRAFFIC_LIGHTS_COUNT 5 
 
 Pos ORIGINS[4]      = {{0, 0}, {79, 5}, {34, 22}, {0, 17}}; /* North invalid*/
 Pos DESTINATIONS[4] = {{39, 0}, {79, 17}, {30, 22}, {0, 7}}; 
 
-Area area_N_N  = (Area){{38, 0}, {45, 4}};
+/*Area area_N_N  = (Area){{38, 0}, {45, 4}};
 Area area_NE_W = (Area){{38, 0}, {45, 4}};
 Area area_SE_E = (Area){{38, 0}, {45, 4}};
 Area area_S_N  = (Area){{38, 0}, {45, 4}};
@@ -25,10 +25,14 @@ Area area_NW_W = (Area){{38, 0}, {45, 4}};
 Area area_CN_W = (Area){{38, 0}, {45, 4}};
 Area area_CS_E = (Area){{38, 0}, {45, 4}};
 Area area_CE_N = (Area){{38, 0}, {45, 4}};
-Area area_CW_S = (Area){{38, 0}, {45, 4}};
+Area area_CW_S = (Area){{38, 0}, {45, 4}};*/
 
-Area area_CN_W = (Area){{38, 0}, {45, 4}};
-Area area_CN_W = (Area){{38, 0}, {45, 4}};
+Area area_N_N  = (Area){{38, 0}, {45, 4}};
+Area area_EW  = (Area){{2, 0}, {45, 4}};
+Area area_WE  = (Area){{38, 0}, {45, 4}};
+Area area_S_N  = (Area){{38, 0}, {45, 4}};
+Area area_NS  = (Area){{29, 5}, {45, 4}};
+Area area_SN = (Area){{38, 0}, {45, 4}};
 
 /*
 printf("\033[%d,%dH%s\n", x, y, s);
@@ -62,11 +66,11 @@ PTrafficController initTrafficController (PMap map)
     tc->vehicles = calloc(MAX_VEHICLE_COUNT, sizeof(PVehicle));
     tc->vehicleCount = 0;
     tc->trafficLights = calloc(TRAFFIC_LIGHTS_COUNT, sizeof(TrafficLight));
-    tc->trafficLights[0] = (TrafficLight){{4, 46}, GREEN_LIGHT};
-    tc->trafficLights[1] = (TrafficLight){{8, 46}, GREEN_LIGHT};
-    tc->trafficLights[2] = (TrafficLight){{14, 25}, GREEN_LIGHT};
-    tc->trafficLights[3] = (TrafficLight){{18, 25}, GREEN_LIGHT};
-    tc->trafficLights[4] = (TrafficLight){{19, 36}, RED_LIGHT};
+    tc->trafficLights[0] = (TrafficLight){{46, 4}, GREEN_LIGHT};
+    tc->trafficLights[1] = (TrafficLight){{46, 8}, GREEN_LIGHT};
+    tc->trafficLights[2] = (TrafficLight){{25, 14}, GREEN_LIGHT};
+    tc->trafficLights[3] = (TrafficLight){{25, 18}, GREEN_LIGHT};
+    tc->trafficLights[4] = (TrafficLight){{36, 19}, RED_LIGHT};
 
     return tc;
 }
@@ -118,6 +122,9 @@ bool inArea (Pos pos, Area area)
         && pos.x <= area.se.x && pos.y <= area.se.y;
 }
 
+
+/////////////////////// Logic //////////////////////////////
+
 void displaySmallVehicle(PVehicle veh)
 {
     Pos pos = veh->pos;
@@ -126,30 +133,28 @@ void displaySmallVehicle(PVehicle veh)
     printf("\x1b[%d;%dH%s\n", pos.y+1, pos.x+1, getDisplayChar(veh->objectId));
 }
 
-/////////////////////// Logic //////////////////////////////
 void update_traffic_lights (PTrafficController tc) 
 {
 	int i, light;
-	long timeLight;
-	unsigned long long time = tc->time;
+	unsigned long long time = tc->time, timeLight;
 	//tc->trafficLights[i]->activeLight = (tc->trafficLights[i]->activeLight + 1)%3;
 	
-	for (i =0; i < 5; i++) {
+	for (i = 0; i < TRAFFIC_LIGHTS_COUNT; i++) {
 		
 		light = tc->trafficLights[i].activeLight;
 		timeLight = tc->trafficLights[i].time;
 		
 		if (timeLight + 5000 <= time && light == GREEN_LIGHT) {
-			tc->trafficLights[i].activeLight = (light + 1)%3;
-			timeLight = time;
+			tc->trafficLights[i].activeLight = (light + 1) % 3;
+			tc->trafficLights[i].time = time;
 		}
 		if (timeLight + 2000 <= time && light == YELLOW_LIGHT) {
-			tc->trafficLights[i].activeLight = (light + 1)%3;
-			timeLight = time;
+			tc->trafficLights[i].activeLight = (light + 1) % 3;
+			tc->trafficLights[i].time = time;
 		}
 		if (timeLight + 7000 <= time && light == RED_LIGHT) {
-			tc->trafficLights[i].activeLight = (light + 1)%3;
-			timeLight = time;
+			tc->trafficLights[i].activeLight = (light + 1) % 3;
+			tc->trafficLights[i].time = time;
 		}
 	}
 }
@@ -171,7 +176,7 @@ void update_model (PTrafficController tc)
 void display_traffic_lights (PTrafficController tc) 
 {
 	int i;
-	for (i =0; i < 5; i++) {
+	for (i = 0; i < TRAFFIC_LIGHTS_COUNT; i++) {
 		
 		int x, y, light;
 		x = tc->trafficLights[i].pos.x;
@@ -179,13 +184,22 @@ void display_traffic_lights (PTrafficController tc)
 		light = tc->trafficLights[i].activeLight;
 		
 		if (light == GREEN_LIGHT) {
-			printf( GREEN "\x1b%d;%dH%s" RESET "\n", y, x, "◉" );
+			printf( GREEN  "\x1b[%d;%dH%s" RESET, y + 1, x + 1, "◉" );
+			printf( RESET  "\x1b[%d;%dH%s", y + 1, x + 1 + 1, "◉" );
+			printf( RESET  "\x1b[%d;%dH%s", y + 1, x + 1 + 2, "◉" );
+			fflush(stdout);
 		}
 		if (light == YELLOW_LIGHT) {
-			printf( YELLOW "\x1b%d;%dH%s" RESET "\n", y, x + 1, "◉" );
+		    printf( RESET  "\x1b[%d;%dH%s", y + 1, x + 1, "◉" );
+			printf( YELLOW "\x1b[%d;%dH%s" RESET, y + 1, x + 1 + 1, "◉" );
+			printf( RESET  "\x1b[%d;%dH%s", y + 1, x + 1 + 2, "◉" );
+			fflush(stdout);
 		}
 		if (light == RED_LIGHT) {
-			printf( RED "\x1b%d;%dH%s" RESET "\n", y, x + 2, "◉" );
+		    printf( RESET  "\x1b[%d;%dH%s", y + 1, x + 1, "◉" );
+		    printf( RESET  "\x1b[%d;%dH%s", y + 1, x + 1 + 1, "◉" );
+			printf( RED    "\x1b[%d;%dH%s" RESET, y + 1, x + 1 + 2, "◉" );
+			fflush(stdout);
 		}	
 	}
 }
@@ -211,10 +225,12 @@ unsigned long long time_miliseconds ()
 
 void simulate (PTrafficController tc)
 {
-    TIME_SINCE_START = 
     bool simulation_end = false;
     unsigned long long time, last_time = time_miliseconds(), dt;
+    int i;
     
+    for (i = 0; i < TRAFFIC_LIGHTS_COUNT; i++)
+        tc->trafficLights[i].time = time_miliseconds();
     
     printf("\x1b[1;1H"); fflush(stdout); // Place sursor at top left
     printf("\x1b[2J"); // clear screen
@@ -223,6 +239,7 @@ void simulate (PTrafficController tc)
     while (!simulation_end) {
         time = time_miliseconds();
         dt = time - last_time;
+        tc->time = time;
     
         update_model(tc);
         update_UI(tc);

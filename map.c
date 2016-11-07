@@ -99,7 +99,7 @@ void displayMap (PMap map)
         for (y = 0; y < map->width ; y++)
         {
             enum ObjectId id = map->grid[x][y];
-            printf("%s", ID_DISPLAY_MAP[id]);
+            printf("%s", ID_INPUT_MAP[id]);
             //printf("%02d ", id);
             //printf("'%s' (0x%X 0x%X 0x%X 0x%X 0x%X)\n", s, s[0], s[1], s[2], s[3], s[4]);
         }
