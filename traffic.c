@@ -8,7 +8,7 @@
 # include "map.h"
 # include "traffic.h"
 
-# define SLEEP_TIME 200000
+# define SLEEP_TIME 100000
 # define MAX_VEHICLE_COUNT 16
 # define TRAFFIC_LIGHTS_COUNT 5 
 
@@ -25,6 +25,15 @@ Area area_WE  = (Area){{0, 15}, {79, 17}};
 Area area_S_N  = (Area){{33, 18}, {36, 22}};
 Area area_NS  = (Area){{30, 5}, {30, 22}};
 Area area_SN = (Area){{43, 5}, {43, 17}};
+Area area_TL0 = (Area){{46, 5}, {49, 7}};
+Area area_TL1 = (Area){{46, 9}, {49, 9}};
+Area area_TL2 = (Area){{25, 13}, {28, 13}};
+Area area_TL3 = (Area){{25, 15}, {28, 17}};
+Area area_TL4 = (Area){{29, 19}, {36, 19}};
+Area area_P0 = (Area){{13, 5}, {14, 5}};
+Area area_P1 = (Area){{54, 5}, {55, 5}};
+Area area_P2 = (Area){{47, 17}, {48, 17}};
+Area area_P3 = (Area){{63, 17}, {64, 17}};
 
 /*
 printf("\033[%d,%dH%s\n", x, y, s);
@@ -45,7 +54,7 @@ PVehicle initVehicle (enum ObjectId id)
     veh->align    = rand() % 2;
     veh->speed    = rand() % 2;
     veh->active   = 1;
-    veh->parked   = 0;
+    veh->parked   = rand() % 2;
     veh->pos      = ORIGINS[veh->origin];
 
     return veh;
@@ -100,6 +109,7 @@ void delVehicleAt (PTrafficController tc, char index)
         printf("Error: cannot delete vehicle at index %d\n", index);
         //destroyApplication();
     } else {
+        destroyVehicle(tc->vehicles[index]);
         /*int i;
         for (i = index; i < vehicleCount; i++)
             tc->vehicles[i] = tc->vehicles[i+1];*/
@@ -107,6 +117,7 @@ void delVehicleAt (PTrafficController tc, char index)
         --tc->vehicleCount;
         tc->vehicles[tc->vehicleCount] = NULL;
     }
+    
 } 
 
 void delVehicle (PTrafficController tc, PVehicle veh)
@@ -165,7 +176,7 @@ void update_traffic_lights (PTrafficController tc)
 }
 
 
-void check_and_take_action (PVehicle veh)
+void check_and_take_action (PVehicle veh, PTrafficController tc)
 {
     bool in_N_N = inArea(veh->pos, area_N_N);
     bool in_EW = inArea(veh->pos, area_EW);
@@ -173,7 +184,24 @@ void check_and_take_action (PVehicle veh)
     bool in_S_N = inArea(veh->pos, area_S_N);
     bool in_NS = inArea(veh->pos, area_NS);
     bool in_SN = inArea(veh->pos, area_SN);
+    bool in_TL0 = inArea(veh->pos, area_TL0);
+    bool in_TL1 = inArea(veh->pos, area_TL1);
+    bool in_TL2 = inArea(veh->pos, area_TL2);
+    bool in_TL3 = inArea(veh->pos, area_TL3);
+    bool in_TL4 = inArea(veh->pos, area_TL4);
+    bool in_P0 = inArea(veh->pos, area_P0);
+    bool in_P1 = inArea(veh->pos, area_P1);
+    bool in_P2 = inArea(veh->pos, area_P2);
+    bool in_P3 = inArea(veh->pos, area_P3);
+    
     char dest = veh->dest;
+    char parked = veh->parked;
+    
+    int tl0 = tc->trafficLights[0].activeLight;
+    int tl1 = tc->trafficLights[1].activeLight;
+    int tl2 = tc->trafficLights[2].activeLight;
+    int tl3 = tc->trafficLights[3].activeLight;
+    int tl4 = tc->trafficLights[4].activeLight;
     
     
     if (in_EW) {
@@ -183,8 +211,17 @@ void check_and_take_action (PVehicle veh)
         } else if (in_SN) {
             if (dest == 0) veh->pos.y--;
             else veh->pos.x--;
-        } else veh->pos.x--;
-    } else
+        } else if (in_TL0) { 
+            if (tl0 == RED_LIGHT) {return;}
+            else veh->pos.x--;
+        } /* else if (in_P1) { 
+            if (parked == 1) { veh->pos.y--; return;}
+            else veh->pos.x--;
+        } else if (in_P0) { 
+            if (parked == 1) { veh->pos.y--; return;}
+            else veh->pos.x--;
+        } */ else veh->pos.x--;
+    } else    
     if (in_WE) {
         if (in_NS) {
             if (dest == 2) veh->pos.y++;
@@ -192,13 +229,40 @@ void check_and_take_action (PVehicle veh)
         } else if (in_SN) {
             if (dest == 1) veh->pos.x++;
             else veh->pos.y--;
-        } else veh->pos.x++;
+        } else if (in_TL3) {
+            if (tl3 == RED_LIGHT) {return;}
+            else veh->pos.x++;
+        } /*else if (in_P2) { 
+            if (parked == 1) { veh->pos.y++; return;}
+            else veh->pos.x++;
+        } else if (in_P3) { 
+            if (parked == 1) { veh->pos.y++; return;}
+            else veh->pos.x++;
+        } */else veh->pos.x++;
     } else if (in_N_N) veh->pos.y--;
-    else if (in_EW) veh->pos.x--;
-    else if (in_WE) veh->pos.x++;
-    else if (in_S_N) veh->pos.y--;
+    
+    else if (in_EW) {
+        if (in_TL0) {
+            if (tl0 == RED_LIGHT) {return;}
+            else veh->pos.x--;
+        } else veh->pos.x--;   
+    }
+    else if (in_WE) {
+        if (in_TL3) {
+            if (tl3 == RED_LIGHT) {return;}
+            else veh->pos.x++;
+        } else veh->pos.x++;
+        
+    }
+    else if (in_S_N) { 
+        if (in_TL4) {
+            if (tl4 == RED_LIGHT) {return;}
+            else veh->pos.y--;
+        } else veh->pos.y--;
+    }
     else if (in_NS) veh->pos.y++;
     else if (in_SN) veh->pos.y--;
+    
     else {
         char debug_message[50];
         sprintf(debug_message, "(%d,%d) no action!", veh->pos.x, veh->pos.y);
@@ -222,7 +286,7 @@ void update_model (PTrafficController tc)
     for (i = 0; i < tc->vehicleCount; i++)
     {
         PVehicle veh = tc->vehicles[i];
-        check_and_take_action(veh);
+        check_and_take_action(veh, tc);
         if (!inArea(veh->pos, area_ALL))
             delVehicleAt(tc, i);
     }
@@ -276,6 +340,7 @@ void update_UI (PTrafficController tc)
         /* Print debug info */
         char debug_message[50];
         sprintf(debug_message, "[%d] (%d,%d) dest %s", vehIndex, veh->pos.x, veh->pos.y, CARDINAL_POINTS[veh->dest]);
+        print_debug((Pos){1,19 + vehIndex}, "                    ");
         print_debug((Pos){1,19 + vehIndex}, debug_message);
     }
     display_traffic_lights(tc);
