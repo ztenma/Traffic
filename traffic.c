@@ -9,8 +9,9 @@
 # include "traffic.h"
 
 # define SLEEP_TIME 100000
-# define MAX_VEHICLE_COUNT 16
-# define TRAFFIC_LIGHTS_COUNT 5 
+# define MAX_VEHICLE_COUNT 16 
+# define TRAFFIC_LIGHTS_COUNT 5
+# define PARKING_PROBA 5 
 
 char* CARDINAL_POINTS[4] = {"N", "E", "S", "W"};
 
@@ -19,21 +20,28 @@ Pos DESTINATIONS[4] = {{39, 0}, {79, 17}, {30, 22}, {0, 7}};
 
 Area area_ALL  = (Area){{0, 0}, {79, 22}};
  
-Area area_N_N  = (Area){{38, 0}, {45, 4}};
-Area area_EW  = (Area){{0, 5}, {79, 7}};
+Area area_N_N = (Area){{38, 0}, {45, 4}};
+Area area_EW  = (Area){{0, 5},  {79, 7}};
 Area area_WE  = (Area){{0, 15}, {79, 17}};
-Area area_S_N  = (Area){{33, 18}, {36, 22}};
+Area area_S_N = (Area){{33, 18}, {36, 22}};
 Area area_NS  = (Area){{30, 5}, {30, 22}};
-Area area_SN = (Area){{43, 5}, {43, 17}};
+Area area_SN = (Area){{43, 5},  {43, 17}};
+
 Area area_TL0 = (Area){{46, 5}, {49, 7}};
 Area area_TL1 = (Area){{46, 9}, {49, 9}};
 Area area_TL2 = (Area){{25, 13}, {28, 13}};
 Area area_TL3 = (Area){{25, 15}, {28, 17}};
-Area area_TL4 = (Area){{29, 19}, {36, 19}};
-Area area_P0 = (Area){{13, 5}, {14, 5}};
-Area area_P1 = (Area){{54, 5}, {55, 5}};
-Area area_P2 = (Area){{47, 17}, {48, 17}};
-Area area_P3 = (Area){{63, 17}, {64, 17}};
+Area area_TL4 = (Area){{33, 19}, {35, 19}};
+
+Area area_P0 = (Area){{13, 4}, {15, 4}};
+Area area_P1 = (Area){{54, 4}, {56, 4}};
+Area area_P2 = (Area){{47, 18}, {49, 18}};
+Area area_P3 = (Area){{63, 18}, {65, 18}};
+
+Area area_P0_F = (Area){{14, 5}, {14, 5}};
+Area area_P1_F = (Area){{55, 5}, {55, 5}};
+Area area_P2_F = (Area){{48, 17}, {48, 17}};
+Area area_P3_F = (Area){{64, 17}, {64, 17}};
 
 /*
 printf("\033[%d,%dH%s\n", x, y, s);
@@ -73,8 +81,8 @@ PTrafficController initTrafficController (PMap map)
     tc->vehicleCount = 0;
     tc->trafficLights = calloc(TRAFFIC_LIGHTS_COUNT, sizeof(TrafficLight));
     tc->trafficLights[0] = (TrafficLight){{46, 4}, GREEN_LIGHT};
-    tc->trafficLights[1] = (TrafficLight){{46, 8}, GREEN_LIGHT};
-    tc->trafficLights[2] = (TrafficLight){{25, 14}, GREEN_LIGHT};
+    tc->trafficLights[1] = (TrafficLight){{46, 8}, YELLOW_LIGHT};
+    tc->trafficLights[2] = (TrafficLight){{25, 14}, YELLOW_LIGHT};
     tc->trafficLights[3] = (TrafficLight){{25, 18}, GREEN_LIGHT};
     tc->trafficLights[4] = (TrafficLight){{36, 19}, RED_LIGHT};
 
@@ -110,9 +118,6 @@ void delVehicleAt (PTrafficController tc, char index)
         //destroyApplication();
     } else {
         destroyVehicle(tc->vehicles[index]);
-        /*int i;
-        for (i = index; i < vehicleCount; i++)
-            tc->vehicles[i] = tc->vehicles[i+1];*/
         tc->vehicles[index] = tc->vehicles[tc->vehicleCount-1];
         --tc->vehicleCount;
         tc->vehicles[tc->vehicleCount] = NULL;
@@ -136,6 +141,8 @@ bool inArea (Pos pos, Area area)
 
 
 /////////////////////// Logic //////////////////////////////
+
+/* Model */
 
 void displaySmallVehicle (PVehicle veh)
 {
@@ -175,6 +182,34 @@ void update_traffic_lights (PTrafficController tc)
 	}
 }
 
+int is_occupied (Area area, PTrafficController tc)
+{
+    int i;
+	for (i = 0; i < tc->vehicleCount; i++) {
+        PVehicle veh = tc->vehicles[i];
+        if (inArea(veh->pos, area))
+        {
+            char debug_message[50];
+            sprintf(debug_message, "[(%2d,%2d)(%2d,%2d)] is  occupied", area.nw.x, area.nw.y, area.se.x, area.se.y);
+            print_debug((Pos){50,26}, debug_message);
+            return 1;
+        }
+    }
+    char debug_message[50];
+    sprintf(debug_message, "[(%2d,%2d)(%2d,%2d)] not occupied", area.nw.x, area.nw.y, area.se.x, area.se.y);
+    print_debug((Pos){50,26}, debug_message);
+    return 0;
+}
+
+bool decide_parking ()
+{
+    return (rand() % PARKING_PROBA) == 0;
+}
+
+bool decide_unparking ()
+{
+    return (rand() % (PARKING_PROBA * 10)) == 0;
+}
 
 void check_and_take_action (PVehicle veh, PTrafficController tc)
 {
@@ -184,18 +219,24 @@ void check_and_take_action (PVehicle veh, PTrafficController tc)
     bool in_S_N = inArea(veh->pos, area_S_N);
     bool in_NS = inArea(veh->pos, area_NS);
     bool in_SN = inArea(veh->pos, area_SN);
+    
     bool in_TL0 = inArea(veh->pos, area_TL0);
     bool in_TL1 = inArea(veh->pos, area_TL1);
     bool in_TL2 = inArea(veh->pos, area_TL2);
     bool in_TL3 = inArea(veh->pos, area_TL3);
     bool in_TL4 = inArea(veh->pos, area_TL4);
+    
     bool in_P0 = inArea(veh->pos, area_P0);
     bool in_P1 = inArea(veh->pos, area_P1);
     bool in_P2 = inArea(veh->pos, area_P2);
     bool in_P3 = inArea(veh->pos, area_P3);
     
+    bool in_P0_F = inArea(veh->pos, area_P0_F);
+    bool in_P1_F = inArea(veh->pos, area_P1_F);
+    bool in_P2_F = inArea(veh->pos, area_P2_F);
+    bool in_P3_F = inArea(veh->pos, area_P3_F);
+    
     char dest = veh->dest;
-    char parked = veh->parked;
     
     int tl0 = tc->trafficLights[0].activeLight;
     int tl1 = tc->trafficLights[1].activeLight;
@@ -203,82 +244,69 @@ void check_and_take_action (PVehicle veh, PTrafficController tc)
     int tl3 = tc->trafficLights[3].activeLight;
     int tl4 = tc->trafficLights[4].activeLight;
     
+    if      (in_TL0 && tl0 == RED_LIGHT) return;
+    else if (in_TL3 && tl3 == RED_LIGHT) return;
+    else if (in_TL4 && tl4 == RED_LIGHT) return;
     
+    
+    if (in_P0_F) { 
+        if (!veh->parked && !is_occupied(area_P0, tc) && decide_parking())
+            { veh->parked = 1; veh->pos.y--; return; }
+    } else if (in_P1_F) { 
+        if (!veh->parked && !is_occupied(area_P1, tc) && decide_parking())
+            { veh->parked = 1; veh->pos.y--; return; }
+    } else if (in_P2_F) { 
+        if (!veh->parked && !is_occupied(area_P2, tc) && decide_parking())
+            { veh->parked = 1; veh->pos.y++; return; }
+    } else if (in_P3_F) { 
+        if (!veh->parked && !is_occupied(area_P3, tc) && decide_parking())
+            { veh->parked = 1; veh->pos.y++; return; }
+    } else 
+    if (in_P0) {
+        if (veh->parked && decide_unparking())
+            { veh->parked = 0; veh->pos.y++; return; }
+    } else if (in_P1) {
+        if (veh->parked && decide_unparking())
+            { veh->parked = 0; veh->pos.y++; return; }
+    } else if (in_P2) {
+        if (veh->parked && decide_unparking())
+            { veh->parked = 0; veh->pos.y--; return; }
+    } else if (in_P3) {
+        if (veh->parked && decide_unparking())
+            { veh->parked = 0; veh->pos.y--; return; }
+    }
+
+
     if (in_EW) {
-        if (in_NS) {
-            if (dest == 1 || dest == 2) veh->pos.y++;
-            else veh->pos.x--;
-        } else if (in_SN) {
-            if (dest == 0) veh->pos.y--;
-            else veh->pos.x--;
-        } else if (in_TL0) { 
-            if (tl0 == RED_LIGHT) {return;}
-            else veh->pos.x--;
-        } /* else if (in_P1) { 
-            if (parked == 1) { veh->pos.y--; return;}
-            else veh->pos.x--;
-        } else if (in_P0) { 
-            if (parked == 1) { veh->pos.y--; return;}
-            else veh->pos.x--;
-        } */ else veh->pos.x--;
-    } else    
-    if (in_WE) {
-        if (in_NS) {
-            if (dest == 2) veh->pos.y++;
-            else veh->pos.x++;
-        } else if (in_SN) {
-            if (dest == 1) veh->pos.x++;
-            else veh->pos.y--;
-        } else if (in_TL3) {
-            if (tl3 == RED_LIGHT) {return;}
-            else veh->pos.x++;
-        } /*else if (in_P2) { 
-            if (parked == 1) { veh->pos.y++; return;}
-            else veh->pos.x++;
-        } else if (in_P3) { 
-            if (parked == 1) { veh->pos.y++; return;}
-            else veh->pos.x++;
-        } */else veh->pos.x++;
-    } else if (in_N_N) veh->pos.y--;
-    
-    else if (in_EW) {
-        if (in_TL0) {
-            if (tl0 == RED_LIGHT) {return;}
-            else veh->pos.x--;
-        } else veh->pos.x--;   
-    }
+        if      (in_NS && dest != 3) { veh->pos.y++; return; }
+        else if (in_SN && dest == 0) { veh->pos.y--; return; }
+        else                         { veh->pos.x--; return; }
+    } 
     else if (in_WE) {
-        if (in_TL3) {
-            if (tl3 == RED_LIGHT) {return;}
-            else veh->pos.x++;
-        } else veh->pos.x++;
-        
+        if      (in_NS && dest == 2) { veh->pos.y++; return; }
+        else if (in_SN && dest != 1) { veh->pos.y--; return; }
+        else                         { veh->pos.x++; return; }
     }
-    else if (in_S_N) { 
-        if (in_TL4) {
-            if (tl4 == RED_LIGHT) {return;}
-            else veh->pos.y--;
-        } else veh->pos.y--;
-    }
-    else if (in_NS) veh->pos.y++;
-    else if (in_SN) veh->pos.y--;
+    else if (in_N_N) { veh->pos.y--; return; }
+    else if (in_S_N) { veh->pos.y--; return; }
+    else if (in_NS)  { veh->pos.y++; return; }
+    else if (in_SN)  { veh->pos.y--; return; }
     
-    else {
-        char debug_message[50];
-        sprintf(debug_message, "(%d,%d) no action!", veh->pos.x, veh->pos.y);
-        print_debug((Pos){1,2}, debug_message);
-    }
+    // Default
+    char debug_message[50];
+    sprintf(debug_message, "(%2d,%2d) no action!", veh->pos.x, veh->pos.y);
+    print_debug((Pos){50,24}, debug_message);
 }
 
 void update_model (PTrafficController tc)
 {
     int i;
     
-    print_debug((Pos){1,2}, "                ");
+    print_debug((Pos){50,25}, "                ");
     if (tc->vehicleCount < MAX_VEHICLE_COUNT) {
         PVehicle newVeh = initVehicle(BLUE_CAR);
         addVehicle(tc, newVeh);
-        print_debug((Pos){1,1}, "Vehicle created!");
+        print_debug((Pos){50,25}, "Vehicle created!");
     }
     //PVehicle veh = tc->vehicles[0];
     //veh->pos.x = (veh->pos.x + 1) % 80;
@@ -293,6 +321,8 @@ void update_model (PTrafficController tc)
     
     update_traffic_lights(tc);
 }
+
+/* Display */
 
 void display_traffic_lights (PTrafficController tc) 
 {
@@ -329,9 +359,9 @@ void update_UI (PTrafficController tc)
 {
     int vehIndex;
     
-    /*printf("\x1b[1;1H"); fflush(stdout); // Place sursor at top left
-    printf("\x1b[2J"); // clear screen
-    displayMap (tc->map);*/
+    printf("\x1b[1;1H"); fflush(stdout); // Place sursor at top left
+    //printf("\x1b[2J"); // clear screen
+    displayMap (tc->map);
     for (vehIndex = 0; vehIndex < tc->vehicleCount; vehIndex++)
     {
         PVehicle veh = tc->vehicles[vehIndex];
